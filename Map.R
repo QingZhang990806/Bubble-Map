@@ -66,13 +66,62 @@ a <- ggplot() +
                          pad_x = unit(0.25, "in"), pad_y = unit(0.25, "in"),
                          style = north_arrow_fancy_orienteering)
 
-###### 3. save MAP as png #######
+###### 3. interactive MAP using leaflet #######
+library(leaflet)
+library(dplyr)
+
+# data
+Nine_Sites <- tibble::tribble(
+  ~site2,          ~n, ~mdr,  ~per, ~Latitude, ~Longitude,
+  "Kilimanjaro",   158,  90,  57.0,    -3.31,      37.3,
+  "Makueni",       184,  62,  33.7,    -1.78,      37.6,
+  "Mbarara",       162,  96,  59.3,    -0.505,     30.7,
+  "Mbeya",         128,  79,  61.7,    -8.80,      33.4,
+  "Mwanza",        295, 175,  59.3,    -2.54,      32.8,
+  "Nairobi",       285,  94,  33.0,    -1.27,      36.9,
+  "Nakapiripirit", 139,  52,  37.4,     1.83,      34.6,
+  "Nakasongola",    80,  58,  72.5,     1.25,      32.4,
+  "Nanyuki",       179,  60,  33.5,     0.0154,    37.1
+)
+
+# 3.1 colour gradient
+pal_continuous <- colorNumeric(
+  palette = c("#FDE725FF", "#238A8DFF", "#440154FF"),
+  domain = Nine_Sites$per
+)
+
+# 3.2 interactive map
+leaflet(Nine_Sites) %>%
+  addTiles() %>%  # Base Map - OpenStreetMap
+  addCircleMarkers(
+    lng = ~Longitude,
+    lat = ~Latitude,
+    radius = ~sqrt(n) * 1.5,     # radius（n）
+    color = ~pal_continuous(per),# colour（per）
+    fillOpacity = 0.7,           # transparency
+    stroke = TRUE,               
+    weight = 1,                   
+    popup = ~paste(              # text information
+      "<b>Site:</b> ", site2, "<br>",
+      "<b>Sample Size (n):</b> ", n, "<br>",
+      "<b>MDR %:</b> ", per, "%"
+    )
+  ) %>%
+  addLegend(
+    "bottomright",              # legend location
+    pal = pal_continuous,       # palette
+    values = ~per,
+    title = "MDR Percentage (%)",
+    opacity = 1                 # transparency
+  )
+
+###### 4. save MAP as png #######
 png("map.png", width = 8, height = 6, units = "in", res = 300)
 plot(a)
 dev.off()
 
 
-###### 4. save MAP as pdf #######
+###### 5. save MAP as pdf #######
 pdf("map.pdf", width = 8, height = 6)  # Set width and height to 8x6 inches
 plot(a)
 dev.off()
